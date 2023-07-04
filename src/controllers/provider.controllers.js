@@ -4,6 +4,8 @@ import { Prisma } from "@prisma/client"
 import prisma from "../utils/prisma.js"
 import { validateProvider } from "../validators/provider.js"
 import { filter } from "../utils/common.js"
+import { validateAuth } from '../validators/auth.js'
+import { signAccessToken } from "../utils/jwt.js"
 const router = express.Router()
 
 router.post('/', async (req, res) => {
@@ -38,6 +40,35 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
   const allUsers = await prisma.provider.findMany()
   res.json(allUsers)
+})
+
+router.post('/sign-in', async (req, res) => {
+  const data = req.body
+
+  const validationErrors = validateAuth(data)
+
+  if (Object.keys(validationErrors).length != 0) return res.status(401).send({
+    error: validationErrors
+  })
+
+  const provider = await prisma.provider.findUnique({
+    where: {
+      email: data.email
+    }
+  })
+
+  if (!provider) return res.status(401).send({
+    error: 'Email address or password not valid'
+  })
+
+  const checkPassword = bcrypt.compareSync(data.password, provider.password)
+  if (!checkPassword) return res.status(401).send({
+    error: 'Email address or password not valid'
+  })
+
+  const accessToken = await signAccessToken(provider)
+  const providerId = provider.id
+  return res.json({ accessToken, providerId })
 })
 
 export default router
