@@ -15,4 +15,46 @@ model User {
   name     String?
   email    String  @unique
   password String
+  photo_url String?
+  booking Booking[]
+}
+
+model Provider {
+  id  Int   @id @default(autoincrement())
+  name  String
+  email String  @unique
+  password  String
+  photo_url String @unique
+  hourly_rate Int
+  provider_location Provider_Location[]
+  provider_avalibility  Provider_Avalibility[]
+  booking Booking[]
+}
+
+model Provider_Location {
+  id  Int @id @default(autoincrement())
+  provider  Provider  @relation(fields: [provider_id], references: [id])
+  provider_id Int
+  address String
+}
+
+model Provider_Avalibility {
+  id  Int @id @default(autoincrement())
+  provider Provider @relation(fields: [provider_id], references: [id])
+  provider_id Int
+  day DateTime
+  start_at DateTime
+  end_at  DateTime
+}
+
+model Booking {
+  id  Int @id @default(autoincrement())
+  provider  Provider @relation(fields: [provider_id], references: [id])
+  provider_id Int
+  user  User  @relation(fields: [user_id], references: [id])
+  user_id Int
+  address String
+  booking_starttime DateTime
+  booking_endtime DateTime
+  service_fee Int
 }
