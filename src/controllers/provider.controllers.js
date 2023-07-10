@@ -88,7 +88,6 @@ router.post("/sign-in", async (req, res) => {
 
   const accessToken = await signAccessToken(provider);
   const providerId = provider.id;
-  console.log(providerId);
   return res.json({ accessToken, providerId });
 });
 

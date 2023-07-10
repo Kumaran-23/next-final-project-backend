@@ -8,6 +8,10 @@ router.post("/", auth, async (req, res) => {
   const data = req.body;
   console.log(data);
 
+  if (data.travel_distance) {
+    data.travel_distance = parseInt(data.travel_distance, 10);
+  }
+
   const validationErrors = validateLocation(data);
 
   if (Object.keys(validationErrors).length != 0)
