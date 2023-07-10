@@ -71,4 +71,39 @@ router.post('/sign-in', async (req, res) => {
   return res.json({ accessToken, providerId })
 })
 
+router.get('/:id', async (req, res) => {
+  const providerId = parseInt(req.params.id);
+
+  try {
+    const provider = await prisma.provider.findUnique({
+      where: { id: providerId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        hourly_rate: true,
+        description: true,
+        photo_url: true
+      }
+    });
+
+    if (!provider) {
+      return res.status(404).send({
+        error: 'Provider not found'
+      });
+    }
+
+    return res.json(provider);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({
+      error: 'Internal server error'
+    });
+  }
+});
+
+
 export default router
+
+
+
