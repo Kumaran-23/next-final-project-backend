@@ -7,6 +7,7 @@ import { filter } from "../utils/common.js";
 import { validateAuth } from "../validators/auth.js";
 import { signAccessToken } from "../utils/jwt.js";
 import auth from "../middleware/auth.js";
+import { calculateDistance } from "../utils/distance.js";
 const router = express.Router();
 
 router.post("/", async (req, res) => {
@@ -129,5 +130,72 @@ router.patch("/:id", auth, async (req, res) => {
       throw err;
     });
 });
+
+app.post('/search', async (req, res) => {
+    try {
+        const userAddress = req.body.userAddress;
+        const startTime = req.body.start_time;
+        const endTime = req.body.end_time;
+        const day = req.body.day;
+
+
+        const providers = await prisma.provider.findMany({
+            where: {
+                hourly_rate: {
+                    lte: parseInt(req.body.hourly_rate)
+                },
+                provider_location: {
+                    some: {
+                        address: {
+                            contains: userAddress
+                        }
+                    }
+                },
+                provider_avalibility: {
+                    some: {
+                        AND: [
+                            {
+                                day: {
+                                    equals: day
+                                }
+                            },
+                            {
+                                start_at: {
+                                    lte: startTime
+                                }
+                            },
+                            {
+                                end_at: {
+                                    gte: endTime
+                                }
+                            }
+                        ]
+                    }
+                }
+            },
+            include: {
+                provider_location: true,
+                provider_avalibility: true
+            }
+        });
+
+        // Filter the providers based on their travel distance
+        const filteredProviders = [];
+        for (const provider of providers) {
+            for (const location of provider.provider_location) {
+                const distance = await calculateDistance(userAddress, location.address);
+                if (distance <= location.travel_distance) {
+                    filteredProviders.push(provider);
+                    break;
+                }
+            }
+        }
+
+        res.json(filteredProviders);
+    } catch (error) {
+        res.status(500).json({ error: 'Something went wrong' });
+    }
+});
+
 
 export default router;

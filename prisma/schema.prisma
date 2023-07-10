@@ -45,9 +45,9 @@ model Provider_Avalibility {
   id  Int @id @default(autoincrement())
   provider Provider @relation(fields: [provider_id], references: [id])
   provider_id Int
-  day DateTime
-  start_at DateTime
-  end_at  DateTime
+  day String
+  start_at String
+  end_at  String
 }
 
 model Booking {
