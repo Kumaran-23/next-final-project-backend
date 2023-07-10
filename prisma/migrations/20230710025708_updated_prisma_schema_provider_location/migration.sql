@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Provider_Location" ADD COLUMN     "travel_distance" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "updated_at" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
