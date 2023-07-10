@@ -71,4 +71,50 @@ router.post('/sign-in', async (req, res) => {
   return res.json({ accessToken, providerId })
 })
 
+router.post("/search", async (req, res) => {
+  const userAddress = req.body.userAddress;
+  const startTime = new Date(`1970-01-01T${req.body.start_time}:00Z`);
+  const endTime = new Date(`1970-01-01T${req.body.end_time}:00Z`);
+
+  const providers = await prisma.provider.findMany({
+    where: {
+      hourly_rate: {
+        lte: parseInt(req.body.hourly_rate),
+      },
+      provider_location: {
+        some: {
+          address: {
+            contains: userAddress,
+          },
+        },
+      },
+      provider_avalibility: {
+        some: {
+          AND: [
+            {
+              day: {
+                equals: day,
+              },
+            },
+            {
+              start_at: {
+                lte: startTime,
+              },
+            },
+            {
+              end_at: {
+                gte: endTime,
+              },
+            },
+          ],
+        },
+      },
+    },
+    include: {
+      provider_location: true,
+      provider_avalibility: true,
+    },
+  });
+});
+
 export default router
