@@ -1,12 +1,12 @@
 import express from "express"
 import prisma from "../utils/prisma.js"
+import auth from "../middleware/auth.js";
 
 const router = express.Router();
 
-router.post("/", async (req, res) => {
+router.post("/", auth, async (req, res) => {
   try {
-    const { providerId, availability } = req.body;
-    console.log(req.body);
+    const availability = req.body.availability;
 
     for (const entry of availability) {
       const { day, startAt, endAt } = entry;
@@ -16,9 +16,7 @@ router.post("/", async (req, res) => {
           day: day,
           start_at: startAt,
           end_at: endAt,
-          provider: {
-            connect: { id: parseInt(providerId) },
-          },
+          provider_id: req.user.payload.id,
         }
       });
     };
