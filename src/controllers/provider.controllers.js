@@ -6,6 +6,7 @@ import { validateProvider } from "../validators/provider.js"
 import { filter } from "../utils/common.js"
 import { validateAuth } from '../validators/auth.js'
 import { signAccessToken } from "../utils/jwt.js"
+
 const router = express.Router()
 
 router.post('/', async (req, res) => {
