@@ -71,24 +71,54 @@ router.post("/sign-in", async (req, res) => {
 
   const provider = await prisma.provider.findUnique({
     where: {
-      email: data.email,
-    },
-  });
+      email: data.email
+    }
+  })
 
-  if (!provider)
-    return res.status(401).send({
-      error: "Email address or password not valid",
+  if (!provider) return res.status(401).send({
+    error: 'Email address or password not valid'
+  })
+
+  const checkPassword = bcrypt.compareSync(data.password, provider.password)
+  if (!checkPassword) return res.status(401).send({
+    error: 'Email address or password not valid'
+  })
+
+  const accessToken = await signAccessToken(provider)
+  const providerId = provider.id
+  return res.json({ accessToken, providerId })
+})
+
+// To show provider's profile
+router.get('/:id', async (req, res) => {
+  const providerId = parseInt(req.params.id);
+
+  try {
+    const provider = await prisma.provider.findUnique({
+      where: { id: providerId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        hourly_rate: true,
+        description: true,
+        photo_url: true
+      }
     });
 
-  const checkPassword = bcrypt.compareSync(data.password, provider.password);
-  if (!checkPassword)
-    return res.status(401).send({
-      error: "Email address or password not valid",
-    });
+    if (!provider) {
+      return res.status(404).send({
+        error: 'Provider not found'
+      });
+    }
 
-  const accessToken = await signAccessToken(provider);
-  const providerId = provider.id;
-  return res.json({ accessToken, providerId });
+    return res.json(provider);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({
+      error: 'Internal server error'
+    });
+  }
 });
 
 router.patch("/:id", auth, async (req, res) => {
