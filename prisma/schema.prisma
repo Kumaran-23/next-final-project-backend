@@ -57,7 +57,8 @@ model Booking {
   user  User  @relation(fields: [user_id], references: [id])
   user_id Int
   address String
-  booking_starttime DateTime
-  booking_endtime DateTime
+  booking_starttime String
+  booking_endtime String
+  booking_date  DateTime
   service_fee Int
 }
