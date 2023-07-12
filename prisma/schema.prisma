@@ -47,7 +47,7 @@ model Provider_Avalibility {
   provider_id Int
   day String
   start_at String
-  end_at  String
+  end_at String
 }
 
 model Booking {

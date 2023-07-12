@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "Provider_Avalibility" ALTER COLUMN "start_at" SET DATA TYPE TEXT,
+ALTER COLUMN "end_at" SET DATA TYPE TEXT,
+ALTER COLUMN "day" SET DATA TYPE TEXT;
