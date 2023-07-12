@@ -12,7 +12,7 @@ app.use(cors())
 
 app.use('/users', userRouter);
 app.use('/auth', authRouter);
-app.use('/providers', providerRouter);
+app.use('/provider', providerRouter);
 app.use('/availability', availabilityRouter);
 app.use('/location', locationRouter);
 

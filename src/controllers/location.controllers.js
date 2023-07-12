@@ -31,7 +31,23 @@ router.post("/", auth, async (req, res) => {
     });
 });
 
-router.get("/", async (req, res) => {
+router.get('/location', auth, async (req, res) => {
+  try {  
+    // Fetch the saved location for the user
+    const location = await prisma.provider_Location.findFirst({
+      where: {
+        provider_id: req.user.payload.id // Assuming the userId is associated with the provider_id in the Provider_Location model
+      }
+    });
+
+    res.json(location);
+  } catch (error) {
+    console.error('Failed to fetch saved location:', error);
+    res.status(500).json({ error: 'Failed to fetch saved location' });
+  }
+});
+
+router.get("/all", async (req, res) => {
   const allLocation = await prisma.provider_Location.findMany();
   res.json(allLocation);
 });

@@ -9,6 +9,49 @@ import { signAccessToken } from "../utils/jwt.js";
 import auth from "../middleware/auth.js";
 const router = express.Router();
 
+// For provider to sign up (refactored)
+router.post("/sign-up", async (req, res) => {
+  const data = req.body;
+
+  const validationErrors = validateProvider(data);
+
+  if (Object.keys(validationErrors).length != 0)
+    return res.status(400).send({
+      error: validationErrors,
+  });
+
+  data.password = bcrypt.hashSync(data.password, 8);
+
+  prisma.provider
+    .create({
+      data,
+    })
+    .then((provider) => {
+      return res.json(
+        filter(
+          provider,
+          "id",
+          "name",
+          "email",
+        )
+      );
+    })
+    .catch((err) => {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === "P2002"
+      ) {
+        const formattedError = {};
+        formattedError[`${err.meta.target[0]}`] = "Already taken";
+
+        return res.status(500).send({
+          error: formattedError,
+        });
+      }
+      throw err;
+    });
+});
+
 router.post("/", async (req, res) => {
   const data = req.body;
 
@@ -59,7 +102,8 @@ router.get("/", async (req, res) => {
   res.json(allUsers);
 });
 
-router.post("/sign-in", async (req, res) => {
+// For provider to login (refactored)
+router.post("/login", async (req, res) => {
   const data = req.body;
 
   const validationErrors = validateAuth(data);
@@ -67,27 +111,27 @@ router.post("/sign-in", async (req, res) => {
   if (Object.keys(validationErrors).length != 0)
     return res.status(401).send({
       error: validationErrors,
-    });
+  });
 
   const provider = await prisma.provider.findUnique({
     where: {
       email: data.email
     }
-  })
+  });
 
   if (!provider) return res.status(401).send({
     error: 'Email address or password not valid'
-  })
+  });
 
-  const checkPassword = bcrypt.compareSync(data.password, provider.password)
+  const checkPassword = bcrypt.compareSync(data.password, provider.password);
   if (!checkPassword) return res.status(401).send({
     error: 'Email address or password not valid'
-  })
+  });
 
-  const accessToken = await signAccessToken(provider)
-  const providerId = provider.id
-  return res.json({ accessToken, providerId })
-})
+  const accessToken = await signAccessToken(provider);
+  const providerId = provider.id;
+  return res.json({ accessToken, providerId });
+});
 
 // To show provider's profile
 router.get('/:id', async (req, res) => {
