@@ -4,6 +4,7 @@ import auth from "../middleware/auth.js";
 
 const router = express.Router();
 
+// For providers to set their availability
 router.post("/", auth, async (req, res) => {
   try {
     const availability = req.body.availability;
