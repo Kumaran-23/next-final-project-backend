@@ -30,6 +30,7 @@ model Provider {
   provider_location Provider_Location[]
   provider_avalibility  Provider_Avalibility[]
   booking Booking[]
+  provider_image  Provider_Image[]
 }
 
 model Provider_Location {
@@ -61,4 +62,11 @@ model Booking {
   booking_endtime String
   booking_date  DateTime
   service_fee Int
+}
+
+model Provider_Image {
+  id        Int     @id @default(autoincrement())
+  image_url  String @unique
+  provider  Provider @relation(fields: [provider_id], references: [id])
+  provider_id Int
 }
