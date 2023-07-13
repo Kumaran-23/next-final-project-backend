@@ -9,7 +9,7 @@ import { signAccessToken } from "../utils/jwt.js";
 import auth from "../middleware/auth.js";
 const router = express.Router();
 
-// For provider to sign up (refactored)
+// For provider to sign up for a profile (refactored)
 router.post("/sign-up", async (req, res) => {
   const data = req.body;
 
@@ -85,59 +85,7 @@ router.post("/login", async (req, res) => {
   return res.json({ accessToken, providerId });
 });
 
-// router.post("/", async (req, res) => {
-//   const data = req.body;
-
-//   const validationErrors = validateProvider(data);
-
-//   if (Object.keys(validationErrors).length != 0)
-//     return res.status(400).send({
-//       error: validationErrors,
-//     });
-
-//   data.password = bcrypt.hashSync(data.password, 8);
-
-//   prisma.provider
-//     .create({
-//       data,
-//     })
-//     .then((provider) => {
-//       return res.json(
-//         filter(
-//           provider,
-//           "id",
-//           "name",
-//           "email",
-//           "hourly_rate",
-//           "description",
-//           "photo_url"
-//         )
-//       );
-//     })
-//     .catch((err) => {
-//       if (
-//         err instanceof Prisma.PrismaClientKnownRequestError &&
-//         err.code === "P2002"
-//       ) {
-//         const formattedError = {};
-//         formattedError[`${err.meta.target[0]}`] = "already taken";
-
-//         return res.status(500).send({
-//           error: formattedError,
-//         });
-//       }
-//       throw err;
-//     });
-// });
-
-router.get("/", async (req, res) => {
-  const allUsers = await prisma.provider.findMany();
-  res.json(allUsers);
-});
-
-
-
-// To show provider's profile
+// To show provider's profile (refactored)
 router.get('/:id', async (req, res) => {
   const providerId = parseInt(req.params.id);
 
@@ -169,43 +117,33 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-router.patch("/:id", auth, async (req, res) => {
-  const id = req.params.id;
-  // const validationErrors = editProvider(data);
-  // if (Object.keys(validationErrors).length != 0)
-  //   return res.status(400).send({
-  //     error: validationErrors,
-  //   });
-  prisma.provider
-    .update({
-      where: { id: parseInt(id) },
-      data: req.body,
-    })
-    .then((provider) => {
-      return res.json(
-        filter(
-          provider,
-          "name",
-          "email",
-          "hourly_rate",
-          "description",
-          "photo_url"
-        )
-      );
-    })
-    .catch((err) => {
-      if (
-        err instanceof Prisma.PrismaClientKnownRequestError &&
-        err.code === "P2002"
-      ) {
-        const formattedError = {};
-        formattedError["${err.meta.target[0]}"] = "already taken";
-        return res.status(500).send({
-          error: formattedError,
-        }); // friendly error handling
-      }
-      throw err;
-    });
+// For provider to edit their profile (refactored)
+router.patch("/update-profile", auth, async (req, res) => {
+  try {
+      const data = req.body;
+      console.log(data)
+      
+      await prisma.provider.update({
+          where: { id: req.user.payload.id },
+          data: {
+              photo_url: data.photo_url,
+              name: data.name,
+              hourly_rate: data.hourly_rate,
+              description: data.description
+          }
+      });
+  
+      res.status(200).json({ message: "Profile updated" });
+  } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error updating profile" });
+  }
+});
+
+// To see list of all providers (refactored)
+router.get("/all-providers", async (req, res) => {
+  const allProviders = await prisma.provider.findMany();
+  res.json(allProviders);
 });
 
 export default router;
