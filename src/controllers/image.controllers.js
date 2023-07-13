@@ -7,11 +7,15 @@ const router = express.Router();
 router.post('/', auth, async (req, res) => {
     const data = req.body;
 
+    const test = {...data, provider_id: req.user.payload.id}
+    console.log(test)
 
-    prisma.provider_image.create({
+    console.log(data);
+    console.log(typeof req.user.payload.id)
+    prisma.provider_Image.create({
         data:{
             ...data,
-            provider_id: req.user.payload.id
+            provider_id: parseInt(req.user.payload.id)
         }
     }).then(image => {
         return res.json(image);
@@ -38,7 +42,7 @@ router.get("/", async (req, res) => {
 
 router.get("/:provider_id", async (req,res) => {
   const provider_id = parseInt(req.params.provider_id)
-  const image = await prisma.provider_image.findUnique({
+  const image = await prisma.provider_Image.findMany({
     where: {
       provider_id: provider_id
     }
@@ -47,7 +51,7 @@ router.get("/:provider_id", async (req,res) => {
 })
 
 router.delete('/:id', auth, async (req, res) => {
-  const image = await prisma.provider_image.findUnique({
+  const image = await prisma.provider_Image.findUnique({
     where: {
       id: parseInt(req.params.id)
     }
@@ -56,7 +60,7 @@ router.delete('/:id', auth, async (req, res) => {
       return res.status(401).send({"error": "Unauthorized"})
   }
   else {
-     await prisma.provider_image.delete({
+     await prisma.provider_Image.delete({
       where: {
         id: parseInt(req.params.id)
       }

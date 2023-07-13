@@ -23,6 +23,6 @@ app.use('/availability', availabilityRouter);
 app.use('/location', locationRouter);
 app.use('/create-checkout-session', checkoutRouter);
 app.use('/booking', bookingRouter);
-app.use('/provider_image', imageRouter);
+app.use('/provider-image', imageRouter);
 
 export default app
