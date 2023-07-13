@@ -164,6 +164,77 @@ router.patch("/:id", auth, async (req, res) => {
     });
 });
 
+// router.post('/search', async (req, res) => {
+//     try {
+//         const userAddress = req.body.userAddress;
+//         const startTime = parseInt(req.body.start_time);
+//         const endTime = parseInt(req.body.end_time);
+//         const dateString = req.body.day;
+        
+//         const date = new Date(dateString);
+//         const day = date.toLocaleDateString("en-US", { weekday: "short" });
+
+//         console.log(1);
+//         console.log(`User Address: ${userAddress}`);
+//         console.log(`Day: ${day}`);
+//         console.log(typeof startTime)
+//         console.log(`Start Time: ${startTime}`);
+//         console.log(typeof endTime)
+//         console.log(`End Time: ${endTime}`);
+
+//         // Get all providers with their locations and availabilities
+//         const providers = await prisma.provider.findMany({
+//             include: {
+//                 provider_location: true,
+//                 provider_avalibility: true
+//             }
+//         });
+
+//         // Filter the providers based on their travel distance, day, and time availability
+//         const filteredProviders = [];
+//         for (const provider of providers) {
+//             let isProviderAvailable = provider.provider_avalibility.some(avail => {
+//                 let providerStartTime = parseInt(avail.start_at);
+//                 let providerEndTime = parseInt(avail.end_at);
+
+//                 // Check if the provider is available on the specified day
+//                 if (avail.day.toLowerCase() === day.toLowerCase()) {
+//                     // Check if the start time and end time are within the provider's availability range
+//                     if (startTime >= providerStartTime && endTime <= providerEndTime) {
+//                         return true;
+//                     }
+//                 }
+//                 return false;
+//             });
+
+//             // filters providers based on their availability and travel distance, ensuring that only providers meeting both criteria are included in the filteredProviders.
+//             if (isProviderAvailable) {
+//                 for (const location of provider.provider_location) {
+//                     console.log(`Calculating distance between ${userAddress} and ${location.address}`);
+//                     const distance = await calculateDistance(userAddress, location.address);
+//                     console.log(`Distance: ${distance}, Travel Distance: ${location.travel_distance}`);
+//                     if (distance <= location.travel_distance) {
+//                         filteredProviders.push(provider);
+//                         break;
+//                     }
+//                 }
+//             }
+//         }
+
+//         // Remove duplicate providers based on their IDs
+//         const uniqueProviders = Array.from(new Set(filteredProviders.map(provider => provider.id))).map(id => {
+//             return filteredProviders.find(provider => provider.id === id);
+//         });
+
+//         console.log(2);
+//         console.log(uniqueProviders);
+//         return res.json(uniqueProviders);
+//     } catch (error) {
+//         console.error(error);
+//         res.status(500).json({ error: error.toString() });
+//     }
+// });
+
 router.post('/search', async (req, res) => {
     try {
         const userAddress = req.body.userAddress;
@@ -174,7 +245,6 @@ router.post('/search', async (req, res) => {
         const date = new Date(dateString);
         const day = date.toLocaleDateString("en-US", { weekday: "short" });
 
-        console.log(1);
         console.log(`User Address: ${userAddress}`);
         console.log(`Day: ${day}`);
         console.log(typeof startTime)
@@ -182,17 +252,38 @@ router.post('/search', async (req, res) => {
         console.log(typeof endTime)
         console.log(`End Time: ${endTime}`);
 
-        // Get all providers with their locations and availabilities
+        // Get all providers with their locations, availabilities and bookings
         const providers = await prisma.provider.findMany({
             include: {
                 provider_location: true,
-                provider_avalibility: true
+                provider_avalibility: true,
+                booking: true
             }
         });
 
-        // Filter the providers based on their travel distance, day, and time availability
+        // Filter the providers based on their travel distance, day, and time availability and if they have not been booked yet
         const filteredProviders = [];
         for (const provider of providers) {
+            // Checks if the provider is already booked at the requested time
+            const isAlreadyBooked = provider.booking.some(booking => {
+                const bookingDate = new Date(booking.booking_date).toLocaleDateString();
+                if (bookingDate === date.toLocaleDateString()) {
+                    let bookingStartTime = parseInt(booking.booking_starttime);
+                    let bookingEndTime = parseInt(booking.booking_endtime);
+                    if ((startTime >= bookingStartTime && startTime < bookingEndTime) ||
+                        (endTime > bookingStartTime && endTime <= bookingEndTime)) {
+                          console.log(`Provider ${provider.id} is already booked from ${booking.booking_starttime} to ${booking.booking_endtime} on ${bookingDate}`);
+                        return true;
+                    }
+                }
+                return false;
+            });
+
+            // Skip the provider if they are already booked at the requested time
+            if (isAlreadyBooked) {
+                continue;
+            }
+
             let isProviderAvailable = provider.provider_avalibility.some(avail => {
                 let providerStartTime = parseInt(avail.start_at);
                 let providerEndTime = parseInt(avail.end_at);
@@ -207,7 +298,7 @@ router.post('/search', async (req, res) => {
                 return false;
             });
 
-            // filters providers based on their availability and travel distance, ensuring that only providers meeting both criteria are included in the filteredProviders.
+            // Filters providers based on their availability and travel distance, ensuring that only providers meeting both criteria are included in the filteredProviders.
             if (isProviderAvailable) {
                 for (const location of provider.provider_location) {
                     console.log(`Calculating distance between ${userAddress} and ${location.address}`);
@@ -225,8 +316,6 @@ router.post('/search', async (req, res) => {
         const uniqueProviders = Array.from(new Set(filteredProviders.map(provider => provider.id))).map(id => {
             return filteredProviders.find(provider => provider.id === id);
         });
-
-        console.log(2);
         console.log(uniqueProviders);
         return res.json(uniqueProviders);
     } catch (error) {
