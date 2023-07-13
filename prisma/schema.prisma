@@ -49,6 +49,8 @@ model Provider_Avalibility {
   day String
   start_at String
   end_at String
+
+  @@unique([provider_id, day])
 }
 
 model Booking {
