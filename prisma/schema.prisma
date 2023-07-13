@@ -24,8 +24,8 @@ model Provider {
   name  String
   email String  @unique
   password  String
-  photo_url String? @unique
-  hourly_rate Int?
+  photo_url String @unique
+  hourly_rate Int
   description String?
   provider_location Provider_Location[]
   provider_avalibility  Provider_Avalibility[]
