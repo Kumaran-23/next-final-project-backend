@@ -5,6 +5,7 @@ import authRouter from "./src/controllers/auth.controllers.js"
 import providerRouter from "./src/controllers/provider.controllers.js"
 import availabilityRouter from "./src/controllers/availability.controllers.js"
 import locationRouter from "./src/controllers/location.controllers.js"
+import bookingRouter from "./src/controllers/booking.controllers.js"
 
 const app = express()
 app.use(express.json())
@@ -15,5 +16,6 @@ app.use('/auth', authRouter);
 app.use('/providers', providerRouter);
 app.use('/availability', availabilityRouter);
 app.use('/location', locationRouter);
+app.use('/booking', bookingRouter);
 
 export default app
