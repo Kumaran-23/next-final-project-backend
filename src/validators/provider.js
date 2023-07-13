@@ -18,9 +18,9 @@ export function validateProvider(input) {
     validationErrors['hourly_rate'] = 'Cannot be blank'
   }
 
-  if (!('file' in input) || input['file'].length == 0) {
-    validationErrors['file'] = 'A photo is required to become a provider'
-  }
+  // if (!('file' in input) || input['file'].length == 0) {
+  //   validationErrors['file'] = 'A photo is required to become a provider'
+  // }
 
   if ('password' in input && input['password'].length < 8) {
     validationErrors['password'] = 'Should be at least 8 characters'
