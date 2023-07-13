@@ -4,13 +4,31 @@ import auth from "../middleware/auth.js";
 
 const router = express.Router();
 
+// To get a provider's availability
+router.get('/:id', async (req, res) => {
+  const providerId = parseInt(req.params.id);
+
+  try {
+    const availability = await prisma.provider_Avalibility.findMany({
+      where: { provider_id: providerId }
+    });
+    console.log(availability);
+    return res.json(availability);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).send({
+      error: 'Error retrieving availability'
+    });
+  }
+});
+
 // For providers to create or edit their availability
 router.post("/", auth, async (req, res) => {
   try {
     const availability = req.body.availability;
 
     for (const entry of availability) {
-      const { day, startAt, endAt } = entry;
+      const { day, start_at, end_at } = entry;
 
       await prisma.provider_Avalibility.upsert({
         where: {
@@ -20,14 +38,14 @@ router.post("/", auth, async (req, res) => {
           }
         },
         update: {
-          start_at: startAt,
-          end_at: endAt,
+          start_at: start_at,
+          end_at: end_at,
         },
         create: {
           provider_id: req.user.payload.id,
           day: day,
-          start_at: startAt,
-          end_at: endAt,
+          start_at: start_at,
+          end_at: end_at,
         }
       });
     };
