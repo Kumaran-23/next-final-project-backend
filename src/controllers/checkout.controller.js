@@ -7,16 +7,17 @@ const stripePayment = stripe(stripeSecretKey);
 
 router.post('/', async (req, res) => {
   try {
+    const { unit_amount: bookingPrice } = req.body; // Access the unit_amount from the request body
     const session = await stripePayment.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
         {
           price_data: {
-            currency: 'usd',
+            currency: 'MYR',
             product_data: {
-              name: 'T-shirt',
+              name: 'Provider Services',
             },
-            unit_amount: 2000,
+            unit_amount: bookingPrice,
           },
           quantity: 1,
         },
