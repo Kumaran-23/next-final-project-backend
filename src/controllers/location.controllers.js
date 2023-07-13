@@ -37,7 +37,6 @@ router.get("/", async (req, res) => {
 });
 
 router.patch("/", auth, async (req, res) => {
-
   const data = req.body
   const validationErrors = validateLocation(data);
 
@@ -55,6 +54,5 @@ router.patch("/", auth, async (req, res) => {
       return res.json(data);
     });
 });
-
 
 export default router;
