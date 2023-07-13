@@ -7,6 +7,8 @@ import { filter } from "../utils/common.js";
 import { validateAuth } from "../validators/auth.js";
 import { signAccessToken } from "../utils/jwt.js";
 import auth from "../middleware/auth.js";
+import { calculateDistance } from "../utils/distance.js";
+import { convertTo24Hour, convertTo12Hour } from "../utils/convert24hours.js";
 const router = express.Router();
 
 router.post("/", async (req, res) => {
@@ -71,26 +73,28 @@ router.post("/sign-in", async (req, res) => {
 
   const provider = await prisma.provider.findUnique({
     where: {
-      email: data.email
-    }
-  })
+      email: data.email,
+    },
+  });
 
-  if (!provider) return res.status(401).send({
-    error: 'Email address or password not valid'
-  })
+  if (!provider)
+    return res.status(401).send({
+      error: "Email address or password not valid",
+    });
 
-  const checkPassword = bcrypt.compareSync(data.password, provider.password)
-  if (!checkPassword) return res.status(401).send({
-    error: 'Email address or password not valid'
-  })
+  const checkPassword = bcrypt.compareSync(data.password, provider.password);
+  if (!checkPassword)
+    return res.status(401).send({
+      error: "Email address or password not valid",
+    });
 
-  const accessToken = await signAccessToken(provider)
-  const providerId = provider.id
-  return res.json({ accessToken, providerId })
-})
+  const accessToken = await signAccessToken(provider);
+  const providerId = provider.id;
+  return res.json({ accessToken, providerId });
+});
 
 // To show provider's profile
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req, res) => {
   const providerId = parseInt(req.params.id);
 
   try {
@@ -102,13 +106,13 @@ router.get('/:id', async (req, res) => {
         email: true,
         hourly_rate: true,
         description: true,
-        photo_url: true
-      }
+        photo_url: true,
+      },
     });
 
     if (!provider) {
       return res.status(404).send({
-        error: 'Provider not found'
+        error: "Provider not found",
       });
     }
 
@@ -116,7 +120,7 @@ router.get('/:id', async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).send({
-      error: 'Internal server error'
+      error: "Internal server error",
     });
   }
 });
@@ -158,6 +162,77 @@ router.patch("/:id", auth, async (req, res) => {
       }
       throw err;
     });
+});
+
+router.post('/search', async (req, res) => {
+    try {
+        const userAddress = req.body.userAddress;
+        const startTime = parseInt(req.body.start_time);
+        const endTime = parseInt(req.body.end_time);
+        const dateString = req.body.day;
+        
+        const date = new Date(dateString);
+        const day = date.toLocaleDateString("en-US", { weekday: "short" });
+
+        console.log(1);
+        console.log(`User Address: ${userAddress}`);
+        console.log(`Day: ${day}`);
+        console.log(typeof startTime)
+        console.log(`Start Time: ${startTime}`);
+        console.log(typeof endTime)
+        console.log(`End Time: ${endTime}`);
+
+        // Get all providers with their locations and availabilities
+        const providers = await prisma.provider.findMany({
+            include: {
+                provider_location: true,
+                provider_avalibility: true
+            }
+        });
+
+        // Filter the providers based on their travel distance, day, and time availability
+        const filteredProviders = [];
+        for (const provider of providers) {
+            let isProviderAvailable = provider.provider_avalibility.some(avail => {
+                let providerStartTime = parseInt(avail.start_at);
+                let providerEndTime = parseInt(avail.end_at);
+
+                // Check if the provider is available on the specified day
+                if (avail.day.toLowerCase() === day.toLowerCase()) {
+                    // Check if the start time and end time are within the provider's availability range
+                    if (startTime >= providerStartTime && endTime <= providerEndTime) {
+                        return true;
+                    }
+                }
+                return false;
+            });
+
+            // filters providers based on their availability and travel distance, ensuring that only providers meeting both criteria are included in the filteredProviders.
+            if (isProviderAvailable) {
+                for (const location of provider.provider_location) {
+                    console.log(`Calculating distance between ${userAddress} and ${location.address}`);
+                    const distance = await calculateDistance(userAddress, location.address);
+                    console.log(`Distance: ${distance}, Travel Distance: ${location.travel_distance}`);
+                    if (distance <= location.travel_distance) {
+                        filteredProviders.push(provider);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Remove duplicate providers based on their IDs
+        const uniqueProviders = Array.from(new Set(filteredProviders.map(provider => provider.id))).map(id => {
+            return filteredProviders.find(provider => provider.id === id);
+        });
+
+        console.log(2);
+        console.log(uniqueProviders);
+        return res.json(uniqueProviders);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.toString() });
+    }
 });
 
 export default router;

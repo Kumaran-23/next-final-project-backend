@@ -29,4 +29,29 @@ router.post("/", auth, async (req, res) => {
   }
 });
 
+router.delete('/:id', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const result = await prisma.provider_Avalibility.delete({
+            where: {
+                id: parseInt(id),
+            },
+        });
+
+        res.status(200).json({ message: "Successfully deleted record", result });
+    } catch (error) {
+        res.status(500).json({ error: "Error deleting the record", details: error });
+    }
+});
+
+router.get('/', async (req, res) => {
+    try {
+        const result = await prisma.provider_Avalibility.findMany();
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ error: "Error fetching the records", details: error });
+    }
+});
+
 export default router
