@@ -23,7 +23,7 @@ router.post('/', async (req, res) => {
         },
       ],
       mode: 'payment',
-      success_url: 'http://localhost:8080/success',
+      success_url: 'http://localhost:5173/success',
       cancel_url: 'http://localhost:8080/cancel',
     });
 
@@ -33,5 +33,7 @@ router.post('/', async (req, res) => {
     res.status(500).json({ error: 'Failed to create checkout session' });
   }
 });
+
+
 
 export default router
