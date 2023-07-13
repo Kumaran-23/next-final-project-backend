@@ -55,4 +55,36 @@ router.patch("/", auth, async (req, res) => {
     });
 });
 
+// For provider to add OR edit their location
+router.post("/upsert", auth, async (req, res) => {
+  const data = req.body;
+
+  if (data.travel_distance) {
+    data.travel_distance = parseInt(data.travel_distance, 10);
+  }
+
+  const validationErrors = validateLocation(data);
+
+  if (Object.keys(validationErrors).length != 0)
+    return res.status(400).send({
+      error: validationErrors,
+    });
+
+  try {
+    const providerLocation = await prisma.provider_Location.upsert({
+      where: { provider_id: req.user.payload.id },
+      update: data,
+      create: {
+        ...data,
+        provider_id: req.user.payload.id,
+      },
+    });
+
+    res.json(providerLocation);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update or create location' });
+  }
+});
+
 export default router;
