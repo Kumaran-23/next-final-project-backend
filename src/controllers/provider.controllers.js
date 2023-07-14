@@ -403,13 +403,15 @@ router.get('/:id', async (req, res) => {
 });
 
 // For provider to edit their profile (refactored)
-router.patch("/update-profile", auth, async (req, res) => {
+router.patch("/update", auth, async (req, res) => {
   try {
       const data = req.body;
-      console.log(data)
+      const id  = parseInt(req.user.payload.id);
+      console.log(typeof id)
+      console.log(`${req.user.payload.id}`)
       
       await prisma.provider.update({
-          where: { id: req.user.payload.id },
+          where: { id: parseInt(id) },
           data: {
               photo_url: data.photo_url,
               name: data.name,

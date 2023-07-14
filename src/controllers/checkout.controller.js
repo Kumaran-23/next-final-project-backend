@@ -24,7 +24,7 @@ router.post('/', async (req, res) => {
       ],
       mode: 'payment',
       success_url: 'http://localhost:5173/success',
-      cancel_url: 'http://localhost:8080/cancel',
+      cancel_url: 'http://localhost:5173',
     });
 
     res.json({ sessionUrl: session.url });
