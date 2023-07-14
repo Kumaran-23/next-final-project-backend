@@ -403,19 +403,28 @@ router.get('/:id', async (req, res) => {
 });
 
 // For provider to edit their profile (refactored)
-router.patch("/update-profile", auth, async (req, res) => {
+router.patch("/update", auth, async (req, res) => {
   try {
       const data = req.body;
-      console.log(data)
+      const providerId = parseInt(req.user.payload.id);
+      console.log(providerId);
+
+      const validationErrors = validateProvider(data);
+
+      if (Object.keys(validationErrors).length != 0)
+        return res.status(400).send({
+          error: validationErrors,
+      });
       
       await prisma.provider.update({
-          where: { id: req.user.payload.id },
-          data: {
-              photo_url: data.photo_url,
-              name: data.name,
-              hourly_rate: data.hourly_rate,
-              description: data.description
-          }
+        where: {
+          id: providerId
+        },
+        data: {
+          name: data.name,
+          hourly_rate: data.hourly_rate,
+          description: data.description,
+        }
       });
   
       res.status(200).json({ message: "Profile updated" });
